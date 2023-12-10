@@ -1,5 +1,6 @@
 import streamlit as st
 import numpy as np
+
 import matplotlib.pyplot as plt
 from scipy.optimize import fsolve
 
@@ -138,13 +139,97 @@ def quadratic_interpolation(func, interval_a, interval_b):
 
     return plt, optimal_x
 
+def gradient_descent(func, gradient, initial_point, learning_rate=0.1, tolerance=1e-6, max_iterations=100):
+    point = np.array(initial_point)
+    iterations = 0
+    while np.linalg.norm(gradient(point)) > tolerance and iterations < max_iterations:
+        point = point - learning_rate * gradient(point)
+        iterations += 1
+    return point, iterations
+
+def plot_contour(func, x_range, y_range):
+    x = np.linspace(x_range[0], x_range[1], 100)
+    y = np.linspace(y_range[0], y_range[1], 100)
+    X, Y = np.meshgrid(x, y)
+    Z = func(np.vstack([X.ravel(), Y.ravel()])).reshape(X.shape)
+
+    plt.figure(figsize=(8, 6))
+    contours = plt.contour(X, Y, Z, levels=20, cmap="viridis")
+    plt.colorbar(contours, label='Nivel de la función')
+    plt.title('Función de Contorno')
+    plt.xlabel('x')
+    plt.ylabel('y')
+    plt.axhline(0, color='black', linewidth=0.5, linestyle='--')
+    plt.axvline(0, color='black', linewidth=0.5, linestyle='--')
+    plt.grid(True, linestyle='--', alpha=0.7)
+    plt.scatter(0, 0, color='red', marker='*', label='Mínimo global en (0, 0)')
+    plt.legend()
+    return plt
+
+# Estilos CSS para mejorar la apariencia
+custom_styles = """
+    <style>
+        body {
+            color: #2a2a2a;
+            background-color: #f7f7f7;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .sidebar .sidebar-content {
+            background-color: #264653;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #e76f51;
+        }
+        .stButton {
+            color: #fff !important;
+            background-color: #e76f51 !important;
+        }
+        .stButton:hover {
+            background-color: #2a9d8f !important;
+        }
+    </style>
+"""
+
 
 def main():
     st.set_page_config(layout="wide")
     st.title("Análisis de Datos con Streamlit")
     st.header("Bienvenido a nuestra plataforma de análisis")
-    selected_method = st.selectbox("Selecciona un Método", ["Bisección", "Falsa Posición", "Newton-Raphson", "Secante", "Regla Trapezoidal", "Regla Trapezoidal Múltiple", "Regla de Simpson 1/3", "Método de Euler", "Regla Trapezoidal", "Regla Trapezoidal Múltiple", "Regla de Simpson 1/3", "Método de Euler", "Método de Euler Mejorado", "Método de Runge-Kutta", "Métodos Cerrados de Optimización", "Interpolación Cuadrática"])
+
+    st.markdown("<h2 style='color: #e76f51;'>Descubre y Optimiza</h2>", unsafe_allow_html=True)
+    #st.image("https://i.imgur.com/XWcvyRD.png", use_column_width=True)
+
+    st.markdown("<hr style='border-color: #e76f51;'>", unsafe_allow_html=True)
+
+    # Barra lateral mejorada
+    st.sidebar.markdown("<h2 style='color: #e76f51;'>Equipo de Desarrollo</h2>", unsafe_allow_html=True)
+
+    integrante1 = {
+        "nombre": "James Alejandro Aristizabal Bedoya",
+        "correo": "jamesa.aristizabalb@autonoma.edu.co",
+        "carrera": "Ingeniería Electrónica"
+    }
+
+    integrante2 = {
+        "nombre": "Jhonatan Tamayo Suarez",
+        "correo": "jhonatan.tamayos@autonoma.edu.co",
+        "carrera": "Ingeniería de Sistemas"
+    }
+
+    # Cuadros de información con colores y animaciones
+    st.sidebar.markdown(f"<div class='animated fadeIn' style='color: #2a9d8f; margin-bottom: 10px;'><strong>{integrante1['nombre']}</strong><br>Correo: {integrante1['correo']}<br>Carrera: {integrante1['carrera']}</div>", unsafe_allow_html=True)
+
+    st.sidebar.markdown(f"<div class='animated fadeIn' style='color: #2a9d8f; margin-bottom: 20px;'><strong>{integrante2['nombre']}</strong><br>Correo: {integrante2['correo']}<br>Carrera: {integrante2['carrera']}</div>", unsafe_allow_html=True)
+
+    st.sidebar.markdown("<h2 style='color: #e76f51;'>Enlaces</h2>", unsafe_allow_html=True)
+    st.sidebar.markdown("<a href='https://docs.google.com/document/d/1ZbeROGaORl4n-KD6x85P8fvSMlukZfa_knu7bFFx_O8/edit?usp=drive_link' target='_blank' class='animated fadeIn stButton'>Manual de Usuario</a>", unsafe_allow_html=True)
+
+    selected_method = st.selectbox("Selecciona un Método", ["Bisección", "Falsa Posición", "Newton-Raphson", "Secante", 
+    "Regla Trapezoidal", "Regla Trapezoidal Múltiple", "Regla de Simpson 1/3", "Método de Euler", "Regla Trapezoidal", 
+    "Regla Trapezoidal Múltiple", "Regla de Simpson 1/3", "Método de Euler Mejorado", "Método del Gradiente",
+    "Métodos Cerrados de Optimización", "Interpolación Cuadrática"])
     st.subheader(f"Método: {selected_method}")
+
 
     if selected_method == "Bisección":
         st.write("Encuentra la raíz de la función utilizando el Método de Bisección.")
@@ -280,7 +365,28 @@ def main():
         plot_quadratic, optimal_x_quadratic = quadratic_interpolation(example_function_quadratic, example_interval_a_quadratic, example_interval_b_quadratic)
         st.write(f"Óptimo aproximado: {optimal_x_quadratic}")
         st.pyplot(plot_quadratic)
-        
+
+    elif selected_method == "Método del Gradiente":
+        st.write("Encuentra un mínimo local de la función utilizando el Método del Gradiente.")
+        st.write("Ejemplo de función: $f(x, y) = x^2 + y^2$")
+
+        example_function_gradient = lambda x: x[0]**2 + x[1]**2
+        example_gradient = lambda x: np.array([2 * x[0], 2 * x[1]])
+
+        plot_contour(example_function_gradient, [-5, 5], [-5, 5])
+        st.pyplot()
+
+        initial_point_gradient = st.text_input("Ingresa el punto inicial como una lista [x, y]", "[2, 2]")
+        initial_point_gradient = eval(initial_point_gradient)
+
+        result_gradient, iterations_gradient = gradient_descent(example_function_gradient, example_gradient, initial_point_gradient)
+        st.write(f"Mínimo local encontrado en el punto: {result_gradient}")
+        st.write(f"Número de iteraciones: {iterations_gradient}")
+
+
 if __name__ == "__main__":
     main()
   
+
+
+
